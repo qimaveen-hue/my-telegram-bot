@@ -1,8 +1,6 @@
 import asyncio
-import os
 from datetime import datetime
 import pytz
-from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -61,19 +59,8 @@ async def handle_all_messages(message: types.Message):
         else:
             await message.answer("Пока нет активных пользователей для ответа.")
 
-async def handle_ping(request):
-    return web.Response(text="Bot is running!")
+async def main():
+    await dp.start_polling(bot)
 
-async def on_startup(app):
-    asyncio.create_task(dp.start_polling(bot))
-
-def main():
-    app = web.Application()
-    app.router.add_get("/", handle_ping)
-    app.on_startup.append(on_startup)
-    
-    port = int(os.environ.get("PORT", 8080))
-    web.run_app(app, host="0.0.0.0", port=port)
-
-if __name__ == "main":
-    main()
+if __name__ == "__main__":
+    asyncio.run(main())
