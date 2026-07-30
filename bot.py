@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-TOKEN = "8982333001:AAHj9wFST4PIEot8OA6tLP_duDmsr7tVvkQ"
+TOKEN = "8982333001:AAHDy5W-kvTeP3CZSaDHLR5JOp6VrazRQvg"
 ADMIN_ID = 6482057553
 
 # Часовой пояс Владивостока (МСК+7)
@@ -18,9 +18,13 @@ dp = Dispatcher()
 last_user_id = None
 
 def is_working_hours() -> bool:
-    """Проверяет, входит ли текущее время во Владивостоке в интервал с 10:00 до 23:00."""
+    """
+    Проверяет, входит ли текущее время во Владивостоке в интервал с 10:00 до 01:00 ночи.
+    (Рабочие часы: 10, 11, 12, ..., 23, 00)
+    """
     now = datetime.now(TIMEZONE)
-    return 10 <= now.hour < 23
+    # Если текущий час 10 и больше ИЛИ текущий час 00 (до 01:00 ночи)
+    return now.hour >= 10 or now.hour == 0
 
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
@@ -46,9 +50,9 @@ async def start_cmd(message: types.Message):
 async def handle_all_messages(message: types.Message):
     global last_user_id
     
-    # Если пишет НЕ админ и сейчас НЕ рабочее время по Владивостоку
+    # Если пишет НЕ админ и сейчас НЕ рабочее время (с 01:00 ночи до 10:00 утра)
     if message.from_user.id != ADMIN_ID and not is_working_hours():
-        await message.answer("Режим работы закончен, с 10:00 по 23:00 Вам ответит Художник.")
+        await message.answer("Режим работы закончен, с 10:00 по 01:00 Вам ответит Художник.")
         return
 
     # Логика для админа или в рабочее время
@@ -71,5 +75,5 @@ async def handle_all_messages(message: types.Message):
 async def main():
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if name == "__main__":
     asyncio.run(main())
