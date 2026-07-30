@@ -10,7 +10,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 TOKEN = "8982333001:AAHDy5W-kvTeP3CZSaDHLR5JOp6VrazRQvg"
 ADMIN_ID = 6482057553
 
-# Часовой пояс Владивостока (МСК+7)
 TIMEZONE = pytz.timezone('Asia/Vladivostok')
 
 bot = Bot(token=TOKEN)
@@ -19,7 +18,6 @@ dp = Dispatcher()
 last_user_id = None
 
 def is_working_hours() -> bool:
-    """Проверяет, входит ли текущее время во Владивостоке в интервал с 10:00 до 01:00 ночи."""
     now = datetime.now(TIMEZONE)
     return now.hour >= 10 or now.hour == 0
 
@@ -45,7 +43,6 @@ async def start_cmd(message: types.Message):
 async def handle_all_messages(message: types.Message):
     global last_user_id
     
-    # Если пишет не админ и сейчас нерабочее время
     if message.from_user.id != ADMIN_ID and not is_working_hours():
         await message.answer("Режим работы закончен, с 10:00 по 01:00 Вам ответит Художник.")
         return
@@ -64,26 +61,31 @@ async def handle_all_messages(message: types.Message):
         else:
             await message.answer("Пока нет активных пользователей для ответа.")
 
-# Простейший веб-сервер для проверки от Render
+# Простой веб-сервер для прохождения проверки Health Check
 async def handle_ping(request):
-    return web.Response(text="Bot is running!")
+    return web.Response(text="OK")
 
-async def main():
-    # Настройка и запуск веб-сервера
+async def start_web_server():
     app = web.Application()
     app.router.add_get("/", handle_ping)
+    app.router.add_get("/healthz", handle_ping)
     
     port = int(os.environ.get("PORT", 8080))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
+    
+    # Бесконечный цикл, чтобы веб-сервер не засыпал
+    while True:
+        await asyncio.sleep(3600)
 
-    # Запускаем поллинг бота и держим процесс живым
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await runner.cleanup()
+async def main():
+    # Запускаем параллельно веб-сервер и бота
+    await asyncio.gather(
+        start_web_server(),
+        dp.start_polling(bot)
+    )
 
 if __name__ == "main":
     asyncio.run(main())
