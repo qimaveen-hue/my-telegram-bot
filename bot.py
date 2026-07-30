@@ -65,7 +65,6 @@ async def handle_ping(request):
     return web.Response(text="Bot is running!")
 
 async def on_startup(app):
-    # Запускаем поллинг бота прямо во время старта веб-сервера
     asyncio.create_task(dp.start_polling(bot))
 
 def main():
@@ -76,5 +75,5 @@ def main():
     port = int(os.environ.get("PORT", 8080))
     web.run_app(app, host="0.0.0.0", port=port)
 
-if __name__ == "__main__":
+if __name__ == "main":
     main()
