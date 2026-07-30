@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 import pytz
 from aiohttp import web
@@ -63,21 +64,26 @@ async def handle_all_messages(message: types.Message):
         else:
             await message.answer("Пока нет активных пользователей для ответа.")
 
-# Фейковый веб-сервер для Render Web Service
+# Простейший веб-сервер для проверки от Render
 async def handle_ping(request):
-    return web.Response(text="Bot is alive!")
+    return web.Response(text="Bot is running!")
 
 async def main():
-    # Запускаем мини веб-сервер для Render на порту 8080
+    # Настройка и запуск веб-сервера
     app = web.Application()
     app.router.add_get("/", handle_ping)
+    
+    port = int(os.environ.get("PORT", 8080))
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8080)
+    site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
-    # Запускаем бота
-    await dp.start_polling(bot)
+    # Запускаем поллинг бота и держим процесс живым
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await runner.cleanup()
 
 if __name__ == "main":
     asyncio.run(main())
