@@ -2,11 +2,13 @@ import asyncio
 import os
 from datetime import datetime
 import pytz
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-TOKEN = "8982333001:AAHDy5W-kvTeP3CZSaDHLR5JOp6VrazRQvg"
+# Новый токен от BotFather
+TOKEN = "8982333001:AAGHdSLAu3OPg6agkMfv7qaASf47DQUNnWU"
 ADMIN_ID = 6482057553
 
 TIMEZONE = pytz.timezone('Asia/Vladivostok')
@@ -76,8 +78,23 @@ async def handle_all_messages(message: types.Message):
         else:
             await message.answer("Пока нет активных пользователей для ответа.")
 
-async def main():
-    await dp.start_polling(bot)
+async def handle_ping(request):
+    return web.Response(text="OK")
 
-if __name__ == "__main__":
+async def main():
+    app = web.Application()
+    app.router.add_get("/", handle_ping)
+    
+    port = int(os.environ.get("PORT", 10000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    
+    # Запускаем одновременно веб-сервер для Render и поллинг для бота
+    await asyncio.gather(
+        site.start(),
+        dp.start_polling(bot)
+    )
+
+if __name__ == "main":
     asyncio.run(main())
