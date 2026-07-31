@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 import pytz
 from aiogram import Bot, Dispatcher, types
@@ -19,9 +20,10 @@ def is_working_hours() -> bool:
     now = datetime.now(TIMEZONE)
     return now.hour >= 10 or now.hour == 0
 
+# Основная клавиатура с обновленной категорией "ᨳິ Bust Up"
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="👤 1. Bust Up"), KeyboardButton(text="👤 2. Half Body")],
+        [KeyboardButton(text="ᨳິ Bust Up"), KeyboardButton(text="👤 2. Half Body")],
         [KeyboardButton(text="👤 3. Knee Up"), KeyboardButton(text="👤 4. Full Body")],
         [KeyboardButton(text="📜 Полный Прайс"), KeyboardButton(text="📩 Заказать арт")]
     ],
@@ -41,10 +43,24 @@ async def start_cmd(message: types.Message):
 async def handle_all_messages(message: types.Message):
     global last_user_id
     
+    # 1. Обработка нажатия на категорию "ᨳິ Bust Up"
+    if message.text == "ᨳິ Bust Up":
+        photo_url = "https://i.ibb.co/60BrtmG8/image-18.png"
+        caption_text = (
+            "**ᨳິ Bust Up**\n\n"
+            "• Портрет по грудь.\n"
+            "• Детализированная проработка.\n\n"
+            "Если хотите заказать этот тип арта — напишите сообщение прямо в этот чат!"
+        )
+        await message.answer_photo(photo=photo_url, caption=caption_text, parse_mode="Markdown")
+        return
+
+    # 2. Проверка рабочих часов для клиентов
     if message.from_user.id != ADMIN_ID and not is_working_hours():
         await message.answer("Режим работы закончен, с 10:00 по 01:00 Вам ответит Художник.")
         return
 
+    # 3. Пересылка сообщений от клиента админу
     if message.from_user.id != ADMIN_ID:
         last_user_id = message.from_user.id
         await message.answer("Ваше сообщение получено! Художник ответит вам в ближайшее время.")
@@ -52,6 +68,7 @@ async def handle_all_messages(message: types.Message):
             ADMIN_ID, 
             f"📩 Новое сообщение от @{message.from_user.username or 'без_юзернейма'} (ID: {message.from_user.id}):\n\n{message.text}"
         )
+    # 4. Ответ от админа клиенту
     else:
         if last_user_id:
             await bot.send_message(last_user_id, f"🎨 Ответ от Художника:\n\n{message.text}")
@@ -62,5 +79,5 @@ async def handle_all_messages(message: types.Message):
 async def main():
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if name == "__main__":
     asyncio.run(main())
