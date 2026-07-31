@@ -1,13 +1,10 @@
 import asyncio
-import os
 from datetime import datetime
 import pytz
-from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-# Новый токен от BotFather
 TOKEN = "8982333001:AAGHdSLAu3OPg6agkMfv7qaASf47DQUNnWU"
 ADMIN_ID = 6482057553
 
@@ -22,7 +19,6 @@ def is_working_hours() -> bool:
     now = datetime.now(TIMEZONE)
     return now.hour >= 10 or now.hour == 0
 
-# Основная клавиатура с обновленной категорией "ᨳິ Bust Up"
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="ᨳິ Bust Up"), KeyboardButton(text="👤 2. Half Body")],
@@ -45,7 +41,6 @@ async def start_cmd(message: types.Message):
 async def handle_all_messages(message: types.Message):
     global last_user_id
     
-    # 1. Обработка нажатия на категорию "ᨳິ Bust Up"
     if message.text == "ᨳິ Bust Up":
         photo_url = "https://i.ibb.co/60BrtmG8/image-18.png"
         caption_text = (
@@ -57,12 +52,10 @@ async def handle_all_messages(message: types.Message):
         await message.answer_photo(photo=photo_url, caption=caption_text, parse_mode="Markdown")
         return
 
-    # 2. Проверка рабочих часов для клиентов
     if message.from_user.id != ADMIN_ID and not is_working_hours():
         await message.answer("Режим работы закончен, с 10:00 по 01:00 Вам ответит Художник.")
         return
 
-    # 3. Пересылка сообщений от клиента админу
     if message.from_user.id != ADMIN_ID:
         last_user_id = message.from_user.id
         await message.answer("Ваше сообщение получено! Художник ответит вам в ближайшее время.")
@@ -70,7 +63,6 @@ async def handle_all_messages(message: types.Message):
             ADMIN_ID, 
             f"📩 Новое сообщение от @{message.from_user.username or 'без_юзернейма'} (ID: {message.from_user.id}):\n\n{message.text}"
         )
-    # 4. Ответ от админа клиенту
     else:
         if last_user_id:
             await bot.send_message(last_user_id, f"🎨 Ответ от Художника:\n\n{message.text}")
@@ -78,23 +70,8 @@ async def handle_all_messages(message: types.Message):
         else:
             await message.answer("Пока нет активных пользователей для ответа.")
 
-async def handle_ping(request):
-    return web.Response(text="OK")
-
 async def main():
-    app = web.Application()
-    app.router.add_get("/", handle_ping)
-    
-    port = int(os.environ.get("PORT", 10000))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    
-    # Запускаем одновременно веб-сервер для Render и поллинг для бота
-    await asyncio.gather(
-        site.start(),
-        dp.start_polling(bot)
-    )
+    await dp.start_polling(bot)
 
 if __name__ == "main":
     asyncio.run(main())
